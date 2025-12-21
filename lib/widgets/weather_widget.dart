@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shimmer/shimmer.dart';
 
 class WeatherWidget extends StatefulWidget {
   const WeatherWidget({super.key});
@@ -104,14 +105,24 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         ),
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
-            ? const Center(
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
+            ? Shimmer.fromColors(
+                baseColor: Colors.white38,
+                highlightColor: Colors.white60,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(width: 100, height: 14, color: Colors.white),
+                        const SizedBox(height: 8),
+                        Container(width: 60, height: 28, color: Colors.white),
+                        const SizedBox(height: 8),
+                        Container(width: 80, height: 16, color: Colors.white),
+                      ],
+                    ),
+                    Container(width: 48, height: 48, color: Colors.white),
+                  ],
                 ),
               )
             : Row(

@@ -84,7 +84,7 @@ class _TurnosScreenState extends State<TurnosScreen> {
               children: [
                 DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'Especialidad'),
-                  value: _selectedSpecialty,
+                  initialValue: _selectedSpecialty,
                   items: _specialties
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
@@ -99,7 +99,7 @@ class _TurnosScreenState extends State<TurnosScreen> {
                 if (_selectedSpecialty != null)
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(labelText: 'Profesional'),
-                    value: _selectedDoctor,
+                    initialValue: _selectedDoctor,
                     items: _doctors[_selectedSpecialty]!
                         .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                         .toList(),

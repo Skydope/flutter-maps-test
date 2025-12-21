@@ -6,7 +6,13 @@ import 'screens/educacion_screen.dart';
 import 'screens/turismo_screen.dart';
 import 'screens/service_detail_screen.dart';
 import 'screens/chatbot_screen.dart';
+import 'screens/digital_id_screen.dart';
+import 'screens/participacion_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/biometric_screen.dart';
 import 'widgets/weather_widget.dart';
+
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 void main() {
   runApp(const MyApp());
@@ -17,17 +23,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Bolívar Digital 2030',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1976D2),
-          brightness: Brightness.light,
-        ),
-      ),
-      home: const MainScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Bolívar Digital 2030',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF1976D2),
+              brightness: Brightness.light,
+            ),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF1565C0),
+              brightness: Brightness.dark,
+            ),
+          ),
+          themeMode: currentMode,
+          // Start with BiometricScreen instead of MainScreen
+          home: const BiometricScreen(),
+        );
+      },
     );
   }
 }
@@ -235,6 +255,32 @@ class HomeScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => const TurismoScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _QuickAccessCard(
+                        icon: Icons.how_to_vote,
+                        title: 'Votar',
+                        color: Colors.purple.shade400,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ParticipacionScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _QuickAccessCard(
+                        icon: Icons.badge,
+                        title: 'Mi ID',
+                        color: Colors.indigo.shade400,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DigitalIdScreen(),
                             ),
                           );
                         },
@@ -1137,10 +1183,7 @@ class PerfilScreen extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ServiceDetailScreen(
-                          title: 'Notificaciones',
-                          icon: Icons.notifications,
-                        ),
+                        builder: (_) => const NotificationsScreen(),
                       ),
                     ),
                   ),
@@ -1191,6 +1234,17 @@ class PerfilScreen extends StatelessWidget {
                           Text('San Carlos de Bolívar, Buenos Aires'),
                         ],
                       );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: const Text('Modo Oscuro'),
+                    secondary: const Icon(Icons.dark_mode),
+                    value: themeNotifier.value == ThemeMode.dark,
+                    onChanged: (bool value) {
+                      themeNotifier.value = value
+                          ? ThemeMode.dark
+                          : ThemeMode.light;
                     },
                   ),
                   const SizedBox(height: 16),
