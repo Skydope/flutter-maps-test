@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+
+import 'package:provider/provider.dart';
+import 'services/user_session.dart';
 import 'screens/turnos_screen.dart';
 import 'screens/educacion_screen.dart';
 import 'screens/turismo_screen.dart';
@@ -10,6 +11,8 @@ import 'screens/digital_id_screen.dart';
 import 'screens/participacion_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/biometric_screen.dart';
+import 'screens/my_turns_screen.dart';
+import 'screens/negocios_map_screen.dart';
 import 'widgets/weather_widget.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -23,31 +26,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (context, currentMode, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Bolívar Digital 2030',
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF1976D2),
-              brightness: Brightness.light,
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => UserSession())],
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: themeNotifier,
+        builder: (context, currentMode, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Bolívar Digital 2030',
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF1976D2),
+                brightness: Brightness.light,
+              ),
             ),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF1565C0),
-              brightness: Brightness.dark,
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF1565C0),
+                brightness: Brightness.dark,
+              ),
             ),
-          ),
-          themeMode: currentMode,
-          // Start with BiometricScreen instead of MainScreen
-          home: const BiometricScreen(),
-        );
-      },
+            themeMode: currentMode,
+            // Start with BiometricScreen instead of MainScreen
+            home: const BiometricScreen(),
+          );
+        },
+      ),
     );
   }
 }
@@ -171,9 +177,15 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  '¡Bienvenido, Juan!',
-                                  style: Theme.of(context).textTheme.titleLarge,
+                                Consumer<UserSession>(
+                                  builder: (context, session, _) {
+                                    return Text(
+                                      '¡Bienvenido, ${session.userName.split(' ').first}!',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
+                                    );
+                                  },
                                 ),
                                 const Text('Tu ciudad más conectada que nunca'),
                               ],
@@ -404,150 +416,6 @@ class _NewsCard extends StatelessWidget {
         title: Text(title),
         subtitle: Text(subtitle),
         trailing: Text(date, style: Theme.of(context).textTheme.bodySmall),
-      ),
-    );
-  }
-}
-
-// 🗺️ Pantalla de Mapa de Negocios
-class NegociosMapScreen extends StatefulWidget {
-  const NegociosMapScreen({super.key});
-
-  @override
-  State<NegociosMapScreen> createState() => _NegociosMapScreenState();
-}
-
-class _NegociosMapScreenState extends State<NegociosMapScreen> {
-  final MapController mapController = MapController();
-
-  static const LatLng plazaMitre = LatLng(
-    -36.23030544196618,
-    -61.113839650414725,
-  );
-
-  final List<Map<String, dynamic>> negocios = [
-    {
-      'nombre': 'Café Central',
-      'categoria': 'Gastronomía',
-      'ubicacion': const LatLng(-36.23030, -61.11380),
-      'descripcion': 'Cafetería y panadería artesanal',
-      'horario': '8:00 - 20:00',
-    },
-    {
-      'nombre': 'Farmacia del Pueblo',
-      'categoria': 'Salud',
-      'ubicacion': const LatLng(-36.23050, -61.11400),
-      'descripcion': 'Farmacia con atención 24hs',
-      'horario': '24 horas',
-    },
-    {
-      'nombre': 'Supermercado La Economía',
-      'categoria': 'Supermercado',
-      'ubicacion': const LatLng(-36.23000, -61.11360),
-      'descripcion': 'Supermercado de barrio',
-      'horario': '9:00 - 21:00',
-    },
-  ];
-
-  Map<String, dynamic>? negocioSeleccionado;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Negocios Locales'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: mapController,
-            options: MapOptions(
-              initialCenter: plazaMitre,
-              initialZoom: 16,
-              maxZoom: 50,
-              minZoom: 3,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.bolivar_digital',
-              ),
-              MarkerLayer(
-                markers: negocios.map((negocio) {
-                  return Marker(
-                    point: negocio['ubicacion'],
-                    width: 40,
-                    height: 40,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          negocioSeleccionado = negocio;
-                        });
-                      },
-                      child: const Icon(
-                        Icons.location_on,
-                        size: 40,
-                        color: Colors.red,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-
-          if (negocioSeleccionado != null)
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Card(
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              negocioSeleccionado!['nombre'],
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              setState(() {
-                                negocioSeleccionado = null;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Chip(label: Text(negocioSeleccionado!['categoria'])),
-                      const SizedBox(height: 8),
-                      Text(negocioSeleccionado!['descripcion']),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.access_time, size: 16),
-                          const SizedBox(width: 4),
-                          Text(negocioSeleccionado!['horario']),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }
@@ -1035,7 +903,12 @@ class PerfilScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              _showEditProfileDialog(context);
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -1055,37 +928,41 @@ class PerfilScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Juan Pérez',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'DNI: 12.345.678',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'juan.perez@email.com',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                ],
+              child: Consumer<UserSession>(
+                builder: (context, session, _) {
+                  return Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        session.userName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'DNI: 12.345.678',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'juan.perez@email.com',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
@@ -1164,16 +1041,11 @@ class PerfilScreen extends StatelessWidget {
                   ),
                   _ProfileOption(
                     icon: Icons.history,
-                    title: 'Historial',
-                    subtitle: 'Trámites y servicios realizados',
+                    title: 'Mis Turnos',
+                    subtitle: 'Ver turnos programados',
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const ServiceDetailScreen(
-                          title: 'Historial',
-                          icon: Icons.history,
-                        ),
-                      ),
+                      MaterialPageRoute(builder: (_) => const MyTurnsScreen()),
                     ),
                   ),
                   _ProfileOption(
@@ -1285,6 +1157,37 @@ class PerfilScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
+    final TextEditingController controller = TextEditingController(
+      text: context.read<UserSession>().userName,
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Nombre'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Nuevo nombre'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                context.read<UserSession>().updateProfile(controller.text);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
       ),
     );
   }

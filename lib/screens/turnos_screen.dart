@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/user_session.dart';
 
 class TurnosScreen extends StatefulWidget {
   const TurnosScreen({super.key});
@@ -210,17 +212,41 @@ class _TurnosScreenState extends State<TurnosScreen> {
   void _confirmTurno() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.check_circle, size: 64, color: Colors.green),
-        title: const Text('¡Turno Confirmado!'),
-        content: const Text(
-          'Te enviamos los detalles a tu correo electrónico.',
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('¡Turno Confirmado!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Tu turno ha sido reservado con éxito.'),
+            const SizedBox(height: 16),
+            Text('Especialidad: $_selectedSpecialty'),
+            Text('Profesional: $_selectedDoctor'),
+            Text('Fecha: ${"${_selectedDate.day}/${_selectedDate.month}"}'),
+            Text('Hora: ${_times[_selectedTimeIndex!]}'),
+          ],
         ),
         actions: [
-          TextButton(
+          FilledButton(
             onPressed: () {
-              Navigator.of(ctx).pop(); // Close dialog
-              Navigator.of(context).pop(); // Back to home
+              // Save to session
+              context.read<UserSession>().addAppointment({
+                'id': DateTime.now().toString(),
+                'specialty': _selectedSpecialty,
+                'doctor': _selectedDoctor,
+                'date': "${_selectedDate.day}/${_selectedDate.month}",
+                'time': _times[_selectedTimeIndex!],
+              });
+
+              Navigator.pop(ctx); // Close dialog
+              Navigator.pop(context); // Go back to home
             },
             child: const Text('Volver al Inicio'),
           ),
