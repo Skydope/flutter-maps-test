@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'screens/turnos_screen.dart';
+import 'screens/educacion_screen.dart';
+import 'screens/turismo_screen.dart';
+import 'screens/service_detail_screen.dart';
+import 'screens/chatbot_screen.dart';
+import 'widgets/weather_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,6 +54,15 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_selectedIndex],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+          );
+        },
+        child: const Icon(Icons.support_agent),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
@@ -151,6 +166,10 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
+                  const WeatherWidget(),
+
+                  const SizedBox(height: 24),
+
                   Text(
                     'Accesos Rápidos',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -172,13 +191,27 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.medical_services,
                         title: 'Turnos Médicos',
                         color: Colors.red.shade400,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TurnosScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _QuickAccessCard(
                         icon: Icons.school,
                         title: 'Educación',
                         color: Colors.blue.shade400,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const EducacionScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _QuickAccessCard(
                         icon: Icons.map,
@@ -197,7 +230,14 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.tour,
                         title: 'Turismo',
                         color: Colors.orange.shade400,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TurismoScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -597,9 +637,12 @@ class _ServicioCategory extends StatelessWidget {
             title: Text(item),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              ScaffoldMessenger.of(
+              Navigator.push(
                 context,
-              ).showSnackBar(SnackBar(content: Text('Abriendo: $item')));
+                MaterialPageRoute(
+                  builder: (_) => ServiceDetailScreen(title: item),
+                ),
+              );
             },
           );
         }).toList(),
@@ -690,6 +733,48 @@ class _ReclamosScreenState extends State<ReclamosScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12.0),
                   child: ListTile(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text('Detalle del Reclamo ${reclamo['id']}'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tipo: ${reclamo['tipo']}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Descripción: ${reclamo['descripcion']}'),
+                              const SizedBox(height: 8),
+                              Text('Estado: ${reclamo['estado']}'),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Seguimiento:',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              const Text('• Reclamo recibido'),
+                              if (reclamo['estado'] != 'Pendiente')
+                                const Text(
+                                  '• Derivado al área correspondiente',
+                                ),
+                              if (reclamo['estado'] == 'Resuelto')
+                                const Text('• Solucionado con éxito'),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cerrar'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     leading: CircleAvatar(
                       backgroundColor: reclamo['color'].withOpacity(0.2),
                       child: Icon(reclamo['icon'], color: reclamo['color']),
@@ -829,6 +914,19 @@ class _ReclamosScreenState extends State<ReclamosScreen> {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
+                    setState(() {
+                      reclamos.insert(0, {
+                        'id':
+                            '#${(reclamos.length + 1).toString().padLeft(3, '0')}',
+                        'tipo': 'Varios',
+                        'descripcion': 'Reclamo generado recientemente...',
+                        'estado': 'Pendiente',
+                        'fecha':
+                            '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+                        'icon': Icons.report_problem,
+                        'color': Colors.blueGrey,
+                      });
+                    });
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -1008,31 +1106,71 @@ class PerfilScreen extends StatelessWidget {
                     icon: Icons.person,
                     title: 'Mis Datos',
                     subtitle: 'Información personal',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ServiceDetailScreen(
+                          title: 'Mis Datos',
+                          icon: Icons.person,
+                        ),
+                      ),
+                    ),
                   ),
                   _ProfileOption(
                     icon: Icons.history,
                     title: 'Historial',
                     subtitle: 'Trámites y servicios realizados',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ServiceDetailScreen(
+                          title: 'Historial',
+                          icon: Icons.history,
+                        ),
+                      ),
+                    ),
                   ),
                   _ProfileOption(
                     icon: Icons.notifications,
                     title: 'Notificaciones',
                     subtitle: 'Configurar alertas',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ServiceDetailScreen(
+                          title: 'Notificaciones',
+                          icon: Icons.notifications,
+                        ),
+                      ),
+                    ),
                   ),
                   _ProfileOption(
                     icon: Icons.favorite,
                     title: 'Favoritos',
                     subtitle: 'Servicios guardados',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ServiceDetailScreen(
+                          title: 'Favoritos',
+                          icon: Icons.favorite,
+                        ),
+                      ),
+                    ),
                   ),
                   _ProfileOption(
                     icon: Icons.help,
                     title: 'Ayuda',
                     subtitle: 'Centro de soporte',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ServiceDetailScreen(
+                          title: 'Ayuda',
+                          icon: Icons.help,
+                        ),
+                      ),
+                    ),
                   ),
                   _ProfileOption(
                     icon: Icons.info,
@@ -1059,7 +1197,27 @@ class PerfilScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Cerrar Sesión'),
+                            content: const Text(
+                              '¿Estás seguro que deseas salir?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Salir'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                       icon: const Icon(Icons.logout),
                       label: const Text('Cerrar Sesión'),
                       style: OutlinedButton.styleFrom(
