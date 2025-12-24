@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../main.dart'; // To access MainScreen
+import '../services/user_session.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -10,6 +12,10 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _dniController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   int _currentPage = 0;
 
   final List<Map<String, String>> _pages = [
@@ -17,20 +23,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'title': 'Bienvenido a Bolívar Digital',
       'desc':
           'Tu ciudad, ahora más conectada que nunca. Accedé a todos los servicios municipales desde tu celular.',
-      'image':
-          'https://illustrations.popsy.co/amber/engineer.svg', // Placeholder illustration
     },
     {
       'title': 'Servicios al Instante',
       'desc':
           'Turnos médicos, pago de tasas, reclamos y más trámites sin moverte de tu casa.',
-      'image': 'https://illustrations.popsy.co/amber/app-development.svg',
     },
     {
-      'title': 'Participación Ciudadana',
-      'desc':
-          'Tu voz cuenta. Votá proyectos, reportá problemas y hacé de Bolívar una ciudad mejor.',
-      'image': 'https://illustrations.popsy.co/amber/success.svg',
+      'title': 'Completá tus datos',
+      'desc': 'Ingresá tu nombre y DNI para personalizar tu experiencia.',
     },
   ];
 
@@ -51,13 +52,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // We use Icons as placeholders if images fail or for simplicity
                         Icon(
                           index == 0
                               ? Icons.location_city
                               : index == 1
                               ? Icons.touch_app
-                              : Icons.people,
+                              : Icons.person_pin,
                           size: 150,
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -77,6 +77,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: Theme.of(context).textTheme.bodyLarge,
                           textAlign: TextAlign.center,
                         ),
+
+                        // Formulario en la última pantalla
+                        if (index == 2) ...[
+                          const SizedBox(height: 32),
+                          TextField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Nombre Completo',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.person),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _dniController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'DNI',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.badge),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.email),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   );
@@ -88,6 +121,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Puntos indicadores
                   Row(
                     children: List.generate(
                       _pages.length,
@@ -104,6 +138,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
+
+                  // Botón Siguiente / Comenzar
                   FilledButton(
                     onPressed: () {
                       if (_currentPage < _pages.length - 1) {
@@ -112,9 +148,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           curve: Curves.easeIn,
                         );
                       } else {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (_) => const MainScreen()),
-                        );
+                        // Validate and Save Data
+                        if (_nameController.text.isNotEmpty &&
+                            _dniController.text.isNotEmpty &&
+                            _emailController.text.isNotEmpty) {
+                          context.read<UserSession>().updateProfile(
+                            _nameController.text,
+                            _dniController.text,
+                            _emailController.text,
+                          );
+
+                          context.read<UserSession>().completeOnboarding();
+
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => const MainScreen(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Por favor completá todos los datos',
+                              ),
+                            ),
+                          );
+                        }
                       }
                     },
                     child: Text(

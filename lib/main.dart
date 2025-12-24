@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         builder: (context, currentMode, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'Bolívar Digital 2030',
+            title: 'Bolívar App',
             theme: ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(
@@ -951,14 +951,15 @@ class PerfilScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'DNI: 12.345.678',
-                        style: TextStyle(color: Colors.white70),
+                      Text(
+                        'DNI: ${session.dni}',
+                        style: const TextStyle(color: Colors.white70),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'juan.perez@email.com',
-                        style: TextStyle(color: Colors.white70),
+                      const SizedBox(height: 4),
+                      Text(
+                        session.email,
+                        style: const TextStyle(color: Colors.white70),
                       ),
                     ],
                   );
@@ -1151,6 +1152,56 @@ class PerfilScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Borrar Mis Datos'),
+                            content: const Text(
+                              'Esta acción eliminará todos tus datos personales y citas guardadas. ¿Continuar?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                onPressed: () {
+                                  context.read<UserSession>().clearData();
+                                  Navigator.pop(ctx); // Close dialog
+                                  // Navigate to BiometricScreen which will then go to Onboarding
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const BiometricScreen(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                },
+                                child: const Text('Borrar Todo'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete_forever, color: Colors.red),
+                      label: const Text(
+                        'Borrar Mis Datos',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.all(16),
+                        side: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -1162,16 +1213,41 @@ class PerfilScreen extends StatelessWidget {
   }
 
   void _showEditProfileDialog(BuildContext context) {
-    final TextEditingController controller = TextEditingController(
-      text: context.read<UserSession>().userName,
+    final session = context.read<UserSession>();
+    final TextEditingController nameController = TextEditingController(
+      text: session.userName,
     );
+    final TextEditingController dniController = TextEditingController(
+      text: session.dni,
+    );
+    final TextEditingController emailController = TextEditingController(
+      text: session.email,
+    );
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Editar Nombre'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Nuevo nombre'),
+        title: const Text('Editar Perfil'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Nombre Completo'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: dniController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'DNI'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -1180,8 +1256,14 @@ class PerfilScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              if (controller.text.isNotEmpty) {
-                context.read<UserSession>().updateProfile(controller.text);
+              if (nameController.text.isNotEmpty &&
+                  dniController.text.isNotEmpty &&
+                  emailController.text.isNotEmpty) {
+                context.read<UserSession>().updateProfile(
+                  nameController.text,
+                  dniController.text,
+                  emailController.text,
+                );
                 Navigator.pop(context);
               }
             },

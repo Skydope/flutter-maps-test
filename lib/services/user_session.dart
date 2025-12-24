@@ -4,10 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class UserSession extends ChangeNotifier {
   String _userName = 'Juan Pérez';
+  String _userDni = '12.345.678';
+  String _userEmail = 'juan.perez@email.com';
+  bool _hasCompletedOnboarding = false;
   List<Map<String, dynamic>> _appointments = [];
   bool _isLoading = true;
 
   String get userName => _userName;
+  String get dni => _userDni;
+  String get email => _userEmail;
+  bool get hasCompletedOnboarding => _hasCompletedOnboarding;
   List<Map<String, dynamic>> get appointments => _appointments;
   bool get isLoading => _isLoading;
 
@@ -18,6 +24,9 @@ class UserSession extends ChangeNotifier {
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     _userName = prefs.getString('userName') ?? 'Juan Pérez';
+    _userDni = prefs.getString('dni') ?? '12.345.678';
+    _userEmail = prefs.getString('email') ?? 'juan.perez@email.com';
+    _hasCompletedOnboarding = prefs.getBool('hasCompletedOnboarding') ?? false;
 
     final String? appointmentsString = prefs.getString('appointments');
     if (appointmentsString != null) {
@@ -29,11 +38,56 @@ class UserSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateProfile(String newName) async {
+  Future<void> updateProfile(
+    String newName,
+    String newDni,
+    String newEmail,
+  ) async {
     _userName = newName;
+    // Format DNI with dots
+    _userDni = _formatDni(newDni);
+    _userEmail = newEmail;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', newName);
+    await prefs.setString('userName', _userName);
+    await prefs.setString('dni', _userDni);
+    await prefs.setString('email', newEmail);
+    debugPrint('Profile saved: $_userName, $_userDni, $_userEmail');
+  }
+
+  String _formatDni(String dni) {
+    // Remove all non-digits
+    String cleaned = dni.replaceAll(RegExp(r'\D'), '');
+    // Format with dots
+    if (cleaned.isEmpty) return dni;
+    try {
+      // Validate it's a number but don't store it
+      int.parse(cleaned);
+      final formatter = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+      return cleaned.replaceAllMapped(formatter, (Match m) => '${m[1]}.');
+    } catch (e) {
+      return dni;
+    }
+  }
+
+  Future<void> completeOnboarding() async {
+    _hasCompletedOnboarding = true;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasCompletedOnboarding', true);
+  }
+
+  Future<void> clearData() async {
+    _userName = 'Juan Pérez';
+    _userDni = '12.345.678';
+    _userEmail = 'juan.perez@email.com';
+    _hasCompletedOnboarding = false;
+    _appointments = [];
+
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 
   Future<void> addAppointment(Map<String, dynamic> appointment) async {

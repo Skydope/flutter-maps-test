@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart'; // For MainScreen
 import 'onboarding_screen.dart';
 
 class BiometricScreen extends StatefulWidget {
@@ -34,9 +36,22 @@ class _BiometricScreenState extends State<BiometricScreen>
       _controller.stop();
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-        );
+        // Check SharedPreferences directly to be sure (avoids race conditions with Provider init)
+        final prefs =
+            await SharedPreferences.getInstance(); // Requires import shared_preferences
+        final bool completed = prefs.getBool('hasCompletedOnboarding') ?? false;
+
+        if (mounted) {
+          if (completed) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const MainScreen()),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            );
+          }
+        }
       }
     }
   }

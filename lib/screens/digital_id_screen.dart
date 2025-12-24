@@ -1,5 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/user_session.dart';
+import 'dart:math';
 
 class DigitalIdScreen extends StatefulWidget {
   const DigitalIdScreen({super.key});
@@ -161,27 +163,30 @@ class _DigitalIdScreenState extends State<DigitalIdScreen>
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PÉREZ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'JUAN',
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'DNI: 12.345.678',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
-                        ),
-                      ],
+                    Consumer<UserSession>(
+                      builder: (context, session, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              session.userName.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'DNI: ${session.dni}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
