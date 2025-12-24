@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shimmer/shimmer.dart';
+import '../services/weather_service.dart';
 
 class WeatherWidget extends StatefulWidget {
   const WeatherWidget({super.key});
@@ -11,8 +10,8 @@ class WeatherWidget extends StatefulWidget {
 }
 
 class _WeatherWidgetState extends State<WeatherWidget> {
-  double? _temperature;
-  String? _weatherCodeString;
+  final WeatherService _weatherService = WeatherService();
+  WeatherData? _weatherData;
   bool _isLoading = true;
   bool _hasError = false;
 
@@ -24,18 +23,10 @@ class _WeatherWidgetState extends State<WeatherWidget> {
 
   Future<void> _fetchWeather() async {
     try {
-      // Coords for Bolívar, Buenos Aires: -36.2303, -61.1138
-      final url = Uri.parse(
-        'https://api.open-meteo.com/v1/forecast?latitude=-36.2303&longitude=-61.1138&current_weather=true',
-      );
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final current = data['current_weather'];
+      final weatherData = await _weatherService.fetchWeather();
+      if (weatherData != null) {
         setState(() {
-          _temperature = current['temperature'];
-          _weatherCodeString = _getWeatherDescription(current['weathercode']);
+          _weatherData = weatherData;
           _isLoading = false;
         });
       } else {
@@ -52,18 +43,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     }
   }
 
-  String _getWeatherDescription(int code) {
-    if (code == 0) return 'Despejado';
-    if (code >= 1 && code <= 3) return 'Parcialmente Nublado';
-    if (code >= 45 && code <= 48) return 'Niebla';
-    if (code >= 51 && code <= 67) return 'Llovizna';
-    if (code >= 71 && code <= 77) return 'Nieve';
-    if (code >= 80 && code <= 82) return 'Lluvia Fuerte';
-    if (code >= 95) return 'Tormenta';
-    return 'Variable';
-  }
-
-  IconData _getWeatherIcon(String? description) {
+  IconData _getWeatherIcon(String description) {
     switch (description) {
       case 'Despejado':
         return Icons.wb_sunny;
@@ -140,7 +120,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${_temperature?.toStringAsFixed(1)}°C',
+                        '${_weatherData?.temperature.toStringAsFixed(1)}°C',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -148,7 +128,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                         ),
                       ),
                       Text(
-                        _weatherCodeString ?? '',
+                        _weatherData?.description ?? '',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -157,7 +137,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     ],
                   ),
                   Icon(
-                    _getWeatherIcon(_weatherCodeString),
+                    _getWeatherIcon(_weatherData?.description ?? 'Variable'),
                     size: 48,
                     color: Colors.amberAccent,
                   ),

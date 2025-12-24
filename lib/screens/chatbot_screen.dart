@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/weather_service.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -11,6 +12,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<Message> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  final WeatherService _weatherService = WeatherService();
   bool _isTyping = false;
 
   @override
@@ -52,8 +54,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       reply =
           'Hoy están de turno: Farmacia Del Pueblo (Av. San Martín 150) y Farmacia Nueva (Belgrano 440).';
     } else if (lowerText.contains('clima') || lowerText.contains('tiempo')) {
-      reply =
-          'Puedes ver el clima actualizado en la pantalla de inicio. Hoy tenemos un día agradable.';
+      final weatherData = await _weatherService.fetchWeather();
+      if (weatherData != null) {
+        reply =
+            'El clima en Bolívar ahora: ${weatherData.temperature.toStringAsFixed(1)}°C, ${weatherData.description.toLowerCase()}.';
+      } else {
+        reply =
+            'No pude obtener el clima en este momento. Puedes ver el clima actualizado en la pantalla de inicio.';
+      }
     } else if (lowerText.contains('reclamo') || lowerText.contains('queja')) {
       reply =
           'Entiendo. Para realizar un reclamo, ve a la pestaña "Reclamos" y toca el botón (+).';

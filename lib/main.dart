@@ -136,7 +136,16 @@ class HomeScreen extends StatelessWidget {
             expandedHeight: 200,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Bolívar Digital 2030'),
+              centerTitle: true,
+              title: const Text(
+                'Bolívar App',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color.fromARGB(255, 239, 244, 247),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -148,11 +157,12 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.location_city,
-                    size: 80,
-                    color: Colors.white70,
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/logo3.png',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),

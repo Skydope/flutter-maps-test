@@ -43,15 +43,23 @@ class UserSession extends ChangeNotifier {
     String newDni,
     String newEmail,
   ) async {
-    _userName = newName;
     // Format DNI with dots
-    _userDni = _formatDni(newDni);
-    _userEmail = newEmail;
-    notifyListeners();
+    final formattedDni = _formatDni(newDni);
+
+    // IMPORTANT: Save to SharedPreferences FIRST to prevent data loss
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', _userName);
-    await prefs.setString('dni', _userDni);
+    await prefs.setString('userName', newName);
+    await prefs.setString('dni', formattedDni);
     await prefs.setString('email', newEmail);
+
+    // Then update in-memory values
+    _userName = newName;
+    _userDni = formattedDni;
+    _userEmail = newEmail;
+
+    // Finally notify listeners to update UI
+    notifyListeners();
+
     debugPrint('Profile saved: $_userName, $_userDni, $_userEmail');
   }
 
